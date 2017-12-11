@@ -982,6 +982,8 @@ func resourceAwsS3BucketRead(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[DEBUG] Error setting replication configuration: %s", err)
 			return err
 		}
+	} else {
+		d.Set("replication_configuration", nil)
 	}
 
 	// Read the bucket server side encryption configuration
