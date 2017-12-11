@@ -1007,13 +1007,20 @@ func testAccCheckAWSS3BucketExistsWithProviders(n string, providers *[]*schema.P
 				Bucket: aws.String(rs.Primary.ID),
 			})
 
+			// Bucket will be found in one of providers only. Head bucket may fail with this
+			// so just continue with another provider
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "BucketRegionError" {
+				continue
+			}
+
 			if err != nil {
 				return fmt.Errorf("S3Bucket error: %v", err)
 			}
+
 			return nil
 		}
 
-		return fmt.Errorf("Instance not found")
+		return fmt.Errorf("%s: bucket %s not found", n, rs.Primary.ID)
 	}
 }
 
@@ -1300,6 +1307,11 @@ func testAccCheckAWSS3BucketReplicationRules(n string, providers *[]*schema.Prov
 				Bucket: aws.String(rs.Primary.ID),
 			})
 			if err != nil {
+				// Bucket will be found in one of providers only. GetBucketReplication may fail with this
+				// so just continue with another provider then
+				if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "BucketRegionError" {
+					continue
+				}
 				if rules == nil {
 					return nil
 				}
@@ -1311,7 +1323,7 @@ func testAccCheckAWSS3BucketReplicationRules(n string, providers *[]*schema.Prov
 
 			return nil
 		}
-		return fmt.Errorf("Bucket not found")
+		return fmt.Errorf("%s: bucket %s not found", n, rs.Primary.ID)
 	}
 }
 
